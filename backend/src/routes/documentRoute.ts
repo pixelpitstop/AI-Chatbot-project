@@ -6,7 +6,9 @@ const documentRoute = Router();
 documentRoute.post('/documents/add', async (req: Request, res: Response) => {
   try {
     const title = typeof req.body.title === 'string' ? req.body.title.trim() : '';
-    const content = typeof req.body.content === 'string' ? req.body.content.trim() : '';
+    const content = typeof req.body.content === 'string'
+      ? req.body.content.trim()
+      : (typeof req.body.text === 'string' ? req.body.text.trim() : '');
     const source = typeof req.body.source === 'string' ? req.body.source.trim() : 'user';
     const tags = Array.isArray(req.body.tags) ? req.body.tags : [];
 
@@ -28,8 +30,12 @@ documentRoute.post('/documents/add', async (req: Request, res: Response) => {
 
 documentRoute.get('/documents/search', async (req: Request, res: Response) => {
   try {
-    const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';
-    const topK = typeof req.query.k === 'string' ? Number(req.query.k) : Number(process.env.RAG_TOP_K ?? 4);
+    const query = typeof req.query.q === 'string'
+      ? req.query.q.trim()
+      : (typeof req.query.query === 'string' ? req.query.query.trim() : '');
+    const topK = typeof req.query.k === 'string'
+      ? Number(req.query.k)
+      : (typeof req.query.limit === 'string' ? Number(req.query.limit) : Number(process.env.RAG_TOP_K ?? 4));
 
     if (!query) {
       return res.status(400).json({ ok: false, error: 'q query parameter is required' });

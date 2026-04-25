@@ -5,6 +5,9 @@ import morgan from 'morgan';
 import { testOllamaConnection } from './services/ollamaService';
 import chatRoute from './routes/chatRoute';
 import documentRoute from './routes/documentRoute';
+import strategyRoute from './routes/strategyRoute';
+import argumentRoute from './routes/argumentRoute';
+import memoryRoute from './routes/memoryRoute';
 
 const app = express();
 
@@ -20,6 +23,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 app.use(chatRoute);
 app.use(documentRoute);
+app.use(strategyRoute);
+app.use(argumentRoute);
+app.use(memoryRoute);
 
 app.get('/health', (_req: Request, res: Response) => {
   res.json({

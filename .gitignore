@@ -6,3 +6,10 @@ backend/dist/
 backend/.env
 .DS_Store
 .vscode/
+
+# Local LLM/runtime artifacts
+.local-ollama/
+*.gguf
+
+# Generated local data stores
+backend/data/

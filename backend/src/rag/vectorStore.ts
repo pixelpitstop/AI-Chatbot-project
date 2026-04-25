@@ -110,10 +110,17 @@ export async function addDocument(input: AddDocumentInput) {
 
   const createdAt = new Date().toISOString();
   const newChunks: StoredChunk[] = [];
+  let usedEmbeddings = true;
 
   for (let index = 0; index < chunks.length; index += 1) {
     const text = chunks[index];
-    const embedding = await createEmbedding(text);
+    let embedding: number[] = [];
+
+    try {
+      embedding = await createEmbedding(text);
+    } catch {
+      usedEmbeddings = false;
+    }
 
     newChunks.push({
       id: randomUUID(),
@@ -134,6 +141,7 @@ export async function addDocument(input: AddDocumentInput) {
   return {
     docId,
     chunkCount: newChunks.length,
+    usedEmbeddings,
   };
 }
 
@@ -144,16 +152,72 @@ export async function searchDocuments(query: string, limit = Number(process.env.
     return [];
   }
 
-  const queryEmbedding = await createEmbedding(query);
+  const minSimilarity = Number(process.env.RAG_MIN_SCORE ?? 0.15);
+  let queryEmbedding: number[];
+
+  try {
+    queryEmbedding = await createEmbedding(query);
+  } catch {
+    const terms = query
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .map((term) => term.trim())
+      .filter((term) => term.length >= 3);
+
+    const lexicalResults = inMemoryChunks
+      .map((chunk) => {
+        const text = chunk.text.toLowerCase();
+        let score = 0;
+
+        if (text.includes(query.toLowerCase())) {
+          score += 1.5;
+        }
+
+        for (const term of terms) {
+          if (text.includes(term)) {
+            score += 1;
+          }
+        }
+
+        return { chunk, score };
+      })
+      .filter(({ score }) => score > 0)
+      .sort((first, second) => second.score - first.score)
+      .slice(0, Math.max(1, limit));
+
+    return lexicalResults.map(({ chunk, score }) => ({
+      id: chunk.id,
+      docId: chunk.docId,
+      title: chunk.title,
+      source: chunk.source,
+      tags: chunk.tags,
+      text: chunk.text,
+      score,
+    }));
+  }
+
   const scored = inMemoryChunks
     .map((chunk) => ({
       chunk,
       score: cosineSimilarity(queryEmbedding, chunk.embedding),
     }))
+    .filter(({ score }) => score >= (Number.isNaN(minSimilarity) ? 0 : minSimilarity))
     .sort((a, b) => b.score - a.score)
+    .slice(0, Math.max(1, limit * 3));
+
+  const bestByDocument = new Map<string, { chunk: StoredChunk; score: number }>();
+  for (const item of scored) {
+    const existing = bestByDocument.get(item.chunk.docId);
+    if (!existing || item.score > existing.score) {
+      bestByDocument.set(item.chunk.docId, item);
+    }
+  }
+
+  const finalResults = Array.from(bestByDocument.values())
+    .sort((first, second) => second.score - first.score)
     .slice(0, Math.max(1, limit));
 
-  return scored.map(({ chunk, score }) => ({
+  return finalResults.map(({ chunk, score }) => ({
     id: chunk.id,
     docId: chunk.docId,
     title: chunk.title,

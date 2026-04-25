@@ -1,4 +1,5 @@
 import { addRecentMemory, getRecentMemory } from '../memory';
+import { getStrategyMemory } from '../memory/strategyMemory';
 import { searchDocuments } from '../rag/vectorStore';
 import { generateResponse, streamResponse } from './ollamaService';
 
@@ -14,6 +15,10 @@ type RetrievedChunk = {
   score: number;
 };
 
+const promptMemoryLimit = Number(process.env.PROMPT_MEMORY_LIMIT ?? 6);
+const promptChunkCharLimit = Number(process.env.PROMPT_CHUNK_CHAR_LIMIT ?? 300);
+const promptMemoryCharLimit = Number(process.env.PROMPT_MEMORY_CHAR_LIMIT ?? 220);
+
 function trimText(text: string, maxLength: number) {
   if (text.length <= maxLength) {
     return text;
@@ -26,16 +31,24 @@ function buildPrompt(
   sessionId: string,
   message: string,
   memory: Array<{ role: string; content: string }>,
-  retrievedChunks: RetrievedChunk[]
+  retrievedChunks: RetrievedChunk[],
+  strategy: {
+    country: string;
+    allies: string[];
+    enemies: string[];
+    strategy_notes: string[];
+    opponent_models: Record<string, string>;
+  }
 ) {
-  const recentMessages = memory
-    .map((entry) => `${entry.role.toUpperCase()}: ${trimText(entry.content, 260)}`)
+  const recentWindow = memory.slice(-Math.max(1, Number.isNaN(promptMemoryLimit) ? 6 : promptMemoryLimit));
+  const recentMessages = recentWindow
+    .map((entry) => `${entry.role.toUpperCase()}: ${trimText(entry.content, promptMemoryCharLimit)}`)
     .join('\n');
 
   const retrievedContext = retrievedChunks
     .map((chunk, index) => {
       const score = chunk.score.toFixed(3);
-      return `${index + 1}. ${chunk.title} (${chunk.source}, score=${score}): ${trimText(chunk.text, 360)}`;
+      return `${index + 1}. ${chunk.title} (${chunk.source}, score=${score}): ${trimText(chunk.text, promptChunkCharLimit)}`;
     })
     .join('\n');
 
@@ -46,6 +59,13 @@ function buildPrompt(
     '',
     '[SESSION]',
     `Session ID: ${sessionId}`,
+    '',
+    '[USER CONTEXT]',
+    `country: ${strategy.country || 'Unknown'}`,
+    `allies: ${strategy.allies.join(', ') || 'None'}`,
+    `enemies: ${strategy.enemies.join(', ') || 'None'}`,
+    `strategy_notes: ${strategy.strategy_notes.join(' | ') || 'None'}`,
+    `opponent_models: ${Object.keys(strategy.opponent_models).join(', ') || 'None'}`,
     '',
     '[RETRIEVED CONTEXT]',
     retrievedContext || 'No retrieved context.',
@@ -60,9 +80,10 @@ function buildPrompt(
 
 async function prepareChat(sessionId: string, message: string) {
   const recentMessages = await getRecentMemory(sessionId);
+  const strategy = await getStrategyMemory(sessionId);
   const topK = Number(process.env.RAG_TOP_K ?? 4);
   const retrievedChunks = await searchDocuments(message, Number.isNaN(topK) ? 4 : topK);
-  const prompt = buildPrompt(sessionId, message, recentMessages, retrievedChunks);
+  const prompt = buildPrompt(sessionId, message, recentMessages, retrievedChunks, strategy);
 
   await addRecentMemory(sessionId, {
     role: 'user',
