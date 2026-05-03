@@ -4,6 +4,9 @@ dist/
 backend/dist/
 .env
 backend/.env
+technical.md
+frontend/AGENTS.md
+frontend/CLAUDE.md
 .DS_Store
 .vscode/
 
