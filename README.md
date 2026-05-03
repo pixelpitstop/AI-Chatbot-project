@@ -65,14 +65,26 @@ flowchart LR
 
 ## Evaluation
 
-Example benchmark targets for a recruiter-ready story:
+MUN-focused measured benchmarks (collected with `backend/scripts/benchmarks_mun.js` on this machine). The script prefers real embeddings from `../src/services/ollamaService` when available, otherwise it falls back to deterministic fake embeddings for reproducibility.
 
-| Metric | Value (example) | How measured |
+| Metric | Measured value | How measured |
 |---|---:|---|
-| Average response latency | 300–600 ms first token, 1–3s full answer | Local model run with a 5k token context |
-| Retrieval precision @ 3 | 0.78 | Curated MUN query set |
-| Indexing time per doc | 0.15s / 1k tokens | Batch ingestion benchmark |
-| Context hit rate | 0.85 | Top-5 retrieval coverage on sample prompts |
+| Indexing time per doc (avg) | 0.072 ms | Chunking + embedding (real or fake) + persist to JSON (10 MUN docs) |
+| Retrieval precision @ 1 (avg) | 20% | Evaluation on 10 MUN queries vs indexed corpus |
+| Retrieval precision @ 3 (avg) | 13.33% | Evaluation on 10 MUN queries vs indexed corpus |
+| Context hit rate @ 3 | 40% | Fraction of queries where a relevant doc appeared in top-3 |
+
+Notes:
+- These benchmarks were run on a small MUN-style corpus bundled with the repo; they provide a reproducible baseline but are not representative of larger, real briefing corpora.
+- To get production-grade metrics, run `backend/scripts/benchmarks_mun.js` with your real corpus and ensure a real embedding provider is available (set `LLM_PROVIDER` and start the provider). When real embeddings are used the script will report `useRealEmbedding: true` in its output.
+- Script output (vector store) is written to `backend/data/bench-mun-vector-store.json`.
+
+Run locally:
+
+```bash
+cd backend
+node scripts/benchmarks_mun.js
+```
 
 ## Engineering Tradeoffs
 
