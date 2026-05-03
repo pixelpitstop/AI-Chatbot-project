@@ -7,6 +7,7 @@ import {
   loadStrategy,
   saveStrategy,
   streamChat,
+  uploadDocumentFile,
   type ArgumentResult,
 } from "../lib/munApi";
 
@@ -51,6 +52,10 @@ export default function Home() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatBusy, setChatBusy] = useState(false);
   const [statusText, setStatusText] = useState("Ready");
+  const [uploading, setUploading] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadTitle, setUploadTitle] = useState('');
+  const [uploadTags, setUploadTags] = useState('');
 
   const [country, setCountry] = useState("");
   const [alliesText, setAlliesText] = useState("");
@@ -256,6 +261,41 @@ export default function Home() {
               >
                 Clear Memory
               </button>
+              <div className="ml-2 flex items-center gap-2">
+                <input
+                  type="file"
+                  onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
+                  className="rounded border px-2 py-1 text-sm"
+                />
+                <input
+                  value={uploadTitle}
+                  onChange={(e) => setUploadTitle(e.target.value)}
+                  placeholder="optional title"
+                  className="hidden sm:inline-block w-40 rounded border px-2 py-1 text-sm"
+                />
+                <button
+                  disabled={uploading || !uploadFile}
+                  onClick={async () => {
+                    if (!uploadFile) return;
+                    setUploading(true);
+                    setStatusText('Uploading document...');
+                    try {
+                      await uploadDocumentFile(uploadFile, uploadTitle || uploadFile.name, uploadTags ? uploadTags.split(',').map(t => t.trim()) : []);
+                      setStatusText('Upload complete. Document indexed.');
+                      setUploadFile(null);
+                      setUploadTitle('');
+                      setUploadTags('');
+                    } catch (err) {
+                      setStatusText(`Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                    } finally {
+                      setUploading(false);
+                    }
+                  }}
+                  className="rounded-xl bg-[var(--color-gold-500)] px-3 py-1 text-sm font-semibold text-[var(--color-ink-900)] transition hover:bg-[var(--color-gold-600)] disabled:opacity-60"
+                >
+                  {uploading ? 'Uploading...' : 'Upload'}
+                </button>
+              </div>
             </div>
           </div>
           <p className="mt-4 text-sm text-[var(--color-ink-700)]">Status: {statusText}</p>
@@ -275,8 +315,8 @@ export default function Home() {
                     <article
                       key={entry.id}
                       className={`max-w-[90%] rounded-xl px-3 py-2 text-sm leading-relaxed ${entry.role === "user"
-                          ? "ml-auto bg-[var(--color-ink-800)] text-white"
-                          : "bg-white text-[var(--color-ink-900)]"
+                        ? "ml-auto bg-[var(--color-ink-800)] text-white"
+                        : "bg-white text-[var(--color-ink-900)]"
                         }`}
                     >
                       <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] opacity-75">{entry.role}</p>

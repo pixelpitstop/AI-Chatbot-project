@@ -101,9 +101,9 @@ node scripts/benchmarks.js
 
 Screenshots / GIF placeholders:
 
-- Chat view: `frontend/public/screenshots/chat.png`
-- Argument generation: `frontend/public/screenshots/argument-generation.png`
-- Strategy panel: `frontend/public/screenshots/strategy-panel.png`
+- Chat view: `frontend/public/image.png`
+- Argument generation: `frontend/public/image 2.png`
+- Strategy panel: `frontend/public/image 3.png`
 
 ## Testing
 

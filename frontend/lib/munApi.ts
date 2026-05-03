@@ -80,6 +80,25 @@ export async function generateArguments(input: {
   };
 }
 
+export async function uploadDocumentFile(file: File, title?: string, tags?: string[]) {
+  const fd = new FormData();
+  fd.append('file', file);
+  if (title) fd.append('title', title);
+  if (tags && tags.length) fd.append('tags', tags.join(','));
+
+  const response = await fetch(`${apiBaseUrl}/documents/upload`, {
+    method: 'POST',
+    body: fd,
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error ?? `Upload failed (${response.status})`);
+  }
+
+  return data;
+}
+
 function parseSseBlock(rawBlock: string) {
   const lines = rawBlock.split('\n').map((line) => line.trim());
   const eventLine = lines.find((line) => line.startsWith('event:'));

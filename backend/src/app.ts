@@ -8,6 +8,7 @@ import documentRoute from './routes/documentRoute';
 import strategyRoute from './routes/strategyRoute';
 import argumentRoute from './routes/argumentRoute';
 import memoryRoute from './routes/memoryRoute';
+import uploadRoute from './routes/uploadRoute';
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 app.use(chatRoute);
 app.use(documentRoute);
+app.use(uploadRoute);
 app.use(strategyRoute);
 app.use(argumentRoute);
 app.use(memoryRoute);
