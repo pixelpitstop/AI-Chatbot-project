@@ -124,6 +124,12 @@ The backend includes tests for:
 - Redis-backed memory window behavior
 - Route contracts and SSE response shape
 
+
+Test Image:
+
+<img width="3024" height="1964" alt="image" src="https://github.com/user-attachments/assets/cc700371-567c-4b4d-a000-96e79384cba0" />
+
+
 Run them with:
 
 ```bash
