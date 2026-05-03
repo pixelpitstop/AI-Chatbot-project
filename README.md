@@ -76,14 +76,14 @@ MUN-focused measured benchmarks (collected with `backend/scripts/benchmarks.js` 
 
 Notes:
 - These benchmarks were run on a small MUN-style corpus bundled with the repo; they provide a reproducible baseline but are not representative of larger, real briefing corpora.
-- To get production-grade metrics, run `backend/scripts/benchmarks_mun.js` with your real corpus and ensure a real embedding provider is available (set `LLM_PROVIDER` and start the provider). When real embeddings are used the script will report `useRealEmbedding: true` in its output.
+- To get production-grade metrics, run `backend/scripts/benchmarks.js` with your real corpus and ensure a real embedding provider is available (set `LLM_PROVIDER` and start the provider). When real embeddings are used the script will report `useRealEmbedding: true` in its output.
 - Script output (vector store) is written to `backend/data/bench-mun-vector-store.json`.
 
 Run locally:
 
 ```bash
 cd backend
-node scripts/benchmarks_mun.js
+node scripts/benchmarks.js
 ```
 
 ## Engineering Tradeoffs
@@ -148,6 +148,6 @@ Requirements:
 
 - Add CI benchmarks for retrieval quality and latency.
 - Add citation verification and hallucination checks.
-- Add a hosted demo mode for easier recruiter review.
+- Add a hosted demo mode for easier review.
 - Add embedded screenshots or a short GIF walkthrough.
 
