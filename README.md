@@ -65,7 +65,7 @@ flowchart LR
 
 ## Evaluation
 
-MUN-focused measured benchmarks (collected with `backend/scripts/benchmarks_mun.js` on this machine). The script prefers real embeddings from `../src/services/ollamaService` when available, otherwise it falls back to deterministic fake embeddings for reproducibility.
+MUN-focused measured benchmarks (collected with `backend/scripts/benchmarks.js` on this machine). The script prefers real embeddings from `../src/services/ollamaService` when available, otherwise it falls back to deterministic fake embeddings for reproducibility.
 
 | Metric | Measured value | How measured |
 |---|---:|---|
